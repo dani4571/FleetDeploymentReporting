@@ -15,6 +15,11 @@ class PropertyAlreadyExistsError(Exception):
         super(PropertyAlreadyExistsError, self).__init__(msg)
 
 
+class EntityDefinitionError(Exception):
+    """Error for problems defining an entity."""
+    pass
+
+
 class RunInvalidError(Exception):
     """Error for a directory in the data directory that isn't a run."""
     def __init__(self, path):
@@ -92,9 +97,52 @@ class MaxRetriesExceededError(Exception):
 
 class EnvironmentNotFoundError(Exception):
     """Error for environment not found."""
-    def __init__(self, account_number, name):
-        msg = (
-            'Unable to locate environment with account number '
-            '\'{}\' and name \'{}\'.'
-        ).format(account_number, name)
+    def __init__(self, uuid):
+        msg = ('Unable to locate environment with uuid \'{}\'.').format(uuid)
         super(EnvironmentNotFoundError, self).__init__(msg)
+
+
+class ConversionError(Exception):
+    """Error for invalid conversion."""
+    def __init__(self, old_val, new_type):
+        """Init the error.
+
+        :param old_val: Old value to convert
+        :type old_val: object
+        :param new_type: New type to convert old value to
+        :type new_type: class
+        """
+        msg = (
+            'Unable to convert value \'{}\' to \'{}\'.'
+            .format(old_val, new_type)
+        )
+        super(ConversionError, self).__init__(msg)
+
+
+class ModelNotFoundError(Exception):
+    """Error for trying to get a model not in the registry."""
+    def __init__(self, model_name):
+        """Init the error.
+
+        :param model_name: Name of the model.
+        :type model_name: str
+        """
+        msg = 'Model \'{}\' not found.'.format(model_name)
+        super(ModelNotFoundError, self).__init__(msg)
+
+
+class PropertyNotFoundError(Exception):
+    """Error for property not existing on a model."""
+    def __init__(self, model_name, property_name):
+        """Init the error.
+
+        :param model_name: Name of the model
+        :type model_name: str
+        :param property_name: Name of the property
+        :type property_name: str
+        """
+        msg = (
+            'Property \'{}\' not found on model \'{}\'.'
+            .format(property_name, model_name)
+        )
+        super(PropertyNotFoundError, self).__init__(msg)

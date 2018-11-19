@@ -1,12 +1,15 @@
 import logging
 
+from .base import versioned_properties
 from .base import VersionedEntity
+from .base import VersionedProperty
 from cloud_snitch import utils
 from cloud_snitch.exc import EnvironmentLockedError
 
 logger = logging.getLogger(__name__)
 
 
+@versioned_properties
 class EnvironmentLockEntity(VersionedEntity):
     """Model an environment lock in the graph.
 
@@ -16,42 +19,38 @@ class EnvironmentLockEntity(VersionedEntity):
 
     label = 'EnvironmentLock'
     state_label = 'EnvironmentLockState'
-    identity_property = 'account_number_name'
-    static_properties = [
-        'account_number',
-        'name',
-        'locked'
-    ]
-    concat_properties = {
-        'account_number_name': [
-            'account_number',
-            'name'
-        ]
+    properties = {
+        'uuid': VersionedProperty(is_identity=True),
+        'account_number': VersionedProperty(is_static=True),
+        'name': VersionedProperty(is_static=True),
+        'locked': VersionedProperty(is_static=True, type=int)
     }
 
     @classmethod
-    def lock(cls, session, account_number, name):
-        """Locks an environment with matching account number and name.
+    def lock(cls, session, uuid, account_number, name):
+        """Locks an environment with matching uuid.
 
         Lock is obtained in a single transaction.
 
         :param session: neo4j driver session
         :type session: neo4j.v1.session.BoltSession
-        :param account_number: Environment account number
+        :param uuid: Environment uuid.
+        :type uuid: str
+        :param account_number: Account number
         :type account_number: str
-        :param name: Environment name
+        :param name: Name of the environment.
         :type name: str
         :returns: The time of the lock in milliseconds. This will be
             used as the key to release the lock
         :rtype: int
         """
-        identity = '-'.join([account_number, name])
         lock_time = utils.milliseconds_now()
         with session.begin_transaction() as tx:
-            instance = cls.find_transaction(tx, identity)
+            instance = cls.find_transaction(tx, uuid)
             if instance is None:
                 # No node found, create the node
                 instance = cls(
+                    uuid=uuid,
                     account_number=account_number,
                     name=name,
                     locked=lock_time
@@ -66,7 +65,7 @@ class EnvironmentLockEntity(VersionedEntity):
         return lock_time
 
     @classmethod
-    def release(cls, session, account_number, name, key):
+    def release(cls, session, uuid, key):
         """Releases the lock on an environment.
 
         :param session: neo4j driver session
@@ -80,10 +79,9 @@ class EnvironmentLockEntity(VersionedEntity):
         :returns: True for lock released or no action, False otherwise
         :rtype: bool
         """
-        identity = '-'.join([account_number, name])
         release_time = utils.milliseconds_now()
         with session.begin_transaction() as tx:
-            instance = cls.find_transaction(tx, identity)
+            instance = cls.find_transaction(tx, uuid)
 
             # Check for empty result
             if instance is None:
