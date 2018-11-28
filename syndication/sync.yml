@@ -1,3 +1,0 @@
-- hosts: cloud_snitch_sync
-  roles:
-    - sync

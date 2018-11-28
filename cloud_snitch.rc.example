@@ -1,2 +1,0 @@
-export CLOUD_SNITCH_ENABLED=true
-export CLOUD_SNITCH_DIR=/root/workspace/cloud_snitch/data

@@ -1,6 +1,0 @@
----
-- hosts: web
-  roles:
-    - web_install
-  tags:
-    - web
